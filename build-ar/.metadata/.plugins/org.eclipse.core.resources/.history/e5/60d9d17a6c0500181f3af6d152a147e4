@@ -1,0 +1,413 @@
+
+#include <signal.h>
+
+
+#include <iostream>
+#include <fstream>
+
+#include <string>
+#include <cassert>
+#include "Comm.h"
+#include "Geometry.h"
+#include "TimerDiff.h"
+#include "RobotStruct.h"
+#include "interprocess_core/reg_msg.h"
+#include "interprocess/shared_data.hpp"
+#include "interprocess/shared_pool.hpp"
+
+#include "robot/angle_calibration.h"
+
+#include "chassis/t20_k_rpm.h"
+#include "chassis/t20_k_angle.h"
+#include "chassis/l16_k_fork.h"
+
+#include "chassis/chassis_forklift_ex.h"
+#include "chassis/t20_can_driver.h"
+
+
+typedef enum{PIDLE,CALIB,ANGLE,TEST,TEST_ANGLE,GET_FORK,TEST_FORK} dStatus;
+dStatus do_status;
+
+angle_manage angle;
+
+Driver_base* driver = 0;
+
+t20_k_rpm k_para;
+t20_k_angle k_angle_para;
+l16_k_fork k_fork_para;
+
+#define SET_MAX_COUNT 2
+
+S32 zero_ad_;
+S32 max_ad_;
+S32 min_ad_;
+F32 adia_;
+
+bool brun = true; 
+
+void shutdown(int sig)
+{
+	std::cout<<"ctrl c shut down"<<std::endl;
+	brun = false;
+	shared_pool::destructor();
+	SLEEP(500);
+
+	return;
+}
+void callback(const sclose &cl){
+
+
+	if (cl.over)
+	{
+		std::cout<<"core shut down:"<<shared_pool::name()<<std::endl;
+		shutdown(1);
+	}
+
+}
+
+void init_shared_pool(char *argv[]){
+
+	shared_pool::init(argv);
+	boost::function<void( const sclose &cl)> fnc_shutdown;
+	fnc_shutdown = boost::bind(callback,_1);
+	shared_pool::Subscribe(shared_pool::name(),"shutdown",fnc_shutdown);
+
+}
+
+bool Init_Chassis(){
+
+	std::string chassis_para = "adia:0.230;D:1.402;L:0.0";
+	Config::getConfig("chassis_para",chassis_para);
+	std::cout<<"chassis_para:"<<chassis_para<<std::endl;
+	std::vector<std::string> vpara;
+	cComm::SplitString(chassis_para,";",vpara);
+
+	std::vector<std::string>::iterator it = vpara.begin();
+	for (; it != vpara.end() ; ++it)
+	{
+		std::string &para_pair = *it;
+		if (para_pair.length())
+		{
+			std::vector<std::string> vpara2;
+			cComm::SplitString(para_pair,":",vpara2);
+			if (vpara2.size() > 1)
+			{
+				if(vpara2[0] == "adia")
+				{
+					cComm::ConvertToNum(adia_,vpara2[1]);
+
+				}
+				//setPara(vpara2[0],vpara2[1]);
+			}
+		}
+	}
+
+
+	std::string chassis_com = "port:ttyUSB0;ratio:0.003";
+	Config::getConfig("chassis_com",chassis_com);
+	std::cout<<"chassis_com"<<chassis_com<<std::endl;
+
+	driver = (Driver_base*)new t20_can_driver();
+	driver->init( chassis_com );
+
+	return true;
+}
+
+
+int main(int argc, char *argv[])
+{
+
+
+	::signal(SIGINT, shutdown);
+
+	F32 test_speed = 0.15;
+	//init shared pool
+	if(argc > 1){
+
+		init_shared_pool(argv);
+
+		k_para.load_para();
+		k_para.save_para();
+
+		while(brun){
+			F32 target_speed = 0;
+			std::cout<<"please input test speed"<<std::endl;
+			std::cin>>target_speed;
+			F32 rpm = target_speed / (adia_*M_PI) * 60 ;
+			F32 trpm = k_para.trans_rpm(rpm);
+			std::cout<<"rpm:"<<rpm<<" trpm:"<<trpm<<std::endl;
+		}
+		return 0;
+	}
+
+//	std::cout<<"load"<<std::endl;
+//	k_angle_para.set_k_para(0,1.0);
+//	k_angle_para.set_k_para(10,1.1);
+//	k_angle_para.set_k_para(-10,1.3);
+//	k_angle_para.save_para();
+//	k_angle_para.load_para();
+//
+//	while(brun){
+//		F32 target_angle = 0;
+//		std::cout<<"please input test speed"<<std::endl;
+//		std::cin>>target_angle;
+//
+//		F32 angle = k_angle_para.trans_angle(target_angle);
+//		std::cout<<"angle:"<<target_angle<<" tangle:"<<angle<<std::endl;
+//	}
+//
+//	return 0;
+
+//	k_para.set_k_para(0.1,0.8);
+//	k_para.set_k_para(0.2,1.1);
+//	k_para.set_k_para(0.3,1.7);
+//
+//	k_para.save_para();
+//	k_para.load_para();
+//
+//
+//	std::cout<<"test_speed :"<<test_speed<<" trans:"<<k_para.trans_rpm(test_speed)<<std::endl;
+//
+//	return 0;
+
+	Init_Chassis();
+
+	cTimerDiff dt;
+
+	k_para.load_para();
+	k_angle_para.load_para();
+	k_fork_para.load_para();
+	
+	do_status = PIDLE;
+	F32 target_speed = 0;
+	F32 target_angle = 0;
+	F32 target_fork  = 85;
+	F32 k = 1;
+	int max_calib_count = 50;
+//	while(1)
+//	{
+//		driver->setRPM(0,0);
+//		SLEEP(500);
+//		driver->getDiffAngle(0);
+//		F32 current_angle = driver->getAngle(0);
+//		std::cout<<"current_angle:"<<current_angle<<std::endl;
+//	}
+	while(brun){
+
+
+		switch(do_status){
+
+		case dStatus::PIDLE:
+		{
+			std::cout<<"please input model c(c speed) a(c angle) f(get fork) s(save speed) sa(save angle) sf(save fork) l(load) t(test speed) ta(test angle) tf(test fork) q(quit):"<<std::endl;
+			std::string str;
+			std::cin>>str;
+
+			if(str == "c"){
+				max_calib_count = 50;
+				std::cout<<"please input calibration speed"<<std::endl;
+				std::cin>>target_speed;
+				do_status = CALIB;
+			}else if(str == "a"){
+
+				max_calib_count = 50;
+				std::cout<<"please input calibration angle"<<std::endl;
+				std::cin>>target_angle;
+				target_angle = Deg2Rad(target_angle);
+				k = 1.0;
+				do_status = ANGLE;
+			}else if(str == "f"){
+				do_status = GET_FORK;
+			}else if(str == "s"){
+				k_para.save_para();
+				do_status = TEST;
+			}else if(str == "sa"){
+				k_angle_para.save_para();
+				do_status = TEST_ANGLE;
+			}else if(str == "sf"){
+				k_fork_para.save_para();
+				do_status = TEST_FORK;
+			}else if(str == "l"){
+				k_para.load_para();
+				do_status = TEST;
+			}else if(str == "la"){
+				k_angle_para.load_para();
+				do_status = TEST_ANGLE;
+			}else if(str == "lf"){
+				k_fork_para.load_para();
+				do_status = TEST_FORK;
+			}else if(str == "t"){
+				do_status = TEST;
+			}else if(str == "ta"){
+				do_status = TEST_ANGLE;
+			}else if(str == "tf"){
+				do_status = TEST_FORK;
+			}else{
+				return 0;
+			}
+			break;
+		}
+		case dStatus::CALIB:
+		{
+
+			F32 rpm = target_speed / (adia_*M_PI) * 60 ;
+			//std::cout<<"target rpm:"<<rpm<<std::endl;
+
+			t20_can_driver* dri_t20 = (t20_can_driver*)driver;
+			dri_t20->setAngleOri(0,0);
+			dri_t20->setRPMOri(0,rpm*k);
+			
+			SLEEP(500);
+			driver->getDiffAngle(0);
+			F32 current_rpm = driver->getSpeed(0);
+			//std::cout<<"current_rpm:"<<current_rpm<<std::endl;
+			if(k_para.calibration(k,rpm,current_rpm)){
+
+				std::cout<<"calibration ok chassis speed k :"<<k<<std::endl;
+				k_para.set_k_para(rpm,k);
+
+				do_status = dStatus::PIDLE;
+			}
+			if( (max_calib_count--) == 0 ){
+				std::cout<<"can't close to target speed! k:"<<k<<std::endl;
+				k_para.set_k_para(rpm,k);
+				do_status = dStatus::PIDLE;
+			}
+			//std::cout<<"calibration speed k :"<<k<<std::endl;
+			//SLEEP(500);
+			break;
+		}
+		case dStatus::ANGLE:
+		{
+
+
+			std::cout<<"target_angle :"<<target_angle<<std::endl;
+			//driver->setAngle(0,target_angle*k);
+			t20_can_driver* dri_t20 = (t20_can_driver*)driver;
+//			if(0 != target_angle)
+//			{
+//				dri_t20->setAngleOri(0,target_angle*k);
+//			}
+//			else
+//			{
+//				dri_t20->setAngleOri(0,k);
+//			}
+			dri_t20->setAngleOri(0,target_angle*k);
+			dri_t20->setRPMOri(0,0);
+			SLEEP(500);
+			driver->getDiffAngle(0);
+			F32 current_angle = driver->getAngle(0);
+			//std::cout<<"current_rpm:"<<current_rpm<<std::endl;
+			if(k_angle_para.calibration(k,target_angle,current_angle,0.2)){
+
+				std::cout<<"calibration ok chassis angle k :"<<k<<std::endl;
+				k_angle_para.set_k_para(target_angle,k);
+
+				do_status = dStatus::PIDLE;
+			}
+			if( (max_calib_count--) == 0 ){
+				std::cout<<"can't close to target angle! k:"<<k<<std::endl;
+				k_angle_para.set_k_para(target_angle,k);
+				do_status = dStatus::PIDLE;
+			}
+			//std::cout<<"calibration speed k :"<<k<<std::endl;
+			//SLEEP(500);
+			break;
+		}
+		case dStatus::TEST:
+		{
+			std::cout<<"test calibration!"<<std::endl;
+			std::cout<<"please input test speed:"<<std::endl;
+			std::cin>>target_speed;
+			F32 rpm = target_speed / (adia_*M_PI) * 60 ;//0.7226 L16 60RPM
+
+			for(int i = 0 ; i < 100 ;++i){
+
+				F32 trpm = k_para.trans_rpm(rpm);
+				t20_can_driver* dri_t20 = (t20_can_driver*)driver;
+				dri_t20->setRPMOri(0,trpm);
+				driver->getDiffAngle(0);
+				F32 current_rpm = driver->getSpeed(0);
+
+				std::cout<<"target_speed:"<<target_speed<<" set rpm:"<<rpm<<" trpm"<<trpm<<" current_rpm:"<<current_rpm<<std::endl;
+				SLEEP(100);
+			}
+			do_status = dStatus::PIDLE;
+
+			break;
+		}case dStatus::TEST_ANGLE:
+		{
+			std::cout<<"test calibration angle!"<<std::endl;
+			std::cout<<"please input test angle:"<<std::endl;
+			std::cin>>target_angle;
+
+			target_angle = Deg2Rad(target_angle);
+			for(int i = 0 ; i < 100 ;++i){
+
+				F32 tangle = k_angle_para.trans_angle(target_angle);
+				t20_can_driver* dri_t20 = (t20_can_driver*)driver;
+				dri_t20->setAngleOri(0,tangle);
+				driver->setRPM(0,0);
+				driver->getDiffAngle(0);
+				F32 current_angle = driver->getAngle(0);
+
+				std::cout<<"target_angle:"<<target_angle<<" set tangle:"<<tangle<<" current_angle:"<<current_angle<<std::endl;
+				SLEEP(100);
+			}
+			do_status = dStatus::PIDLE;
+
+			break;
+		}
+		case dStatus::GET_FORK:
+		{
+			S32 dio_hight=0,current_hight=0;
+
+			t20_can_driver* dri_t20 = (t20_can_driver*)driver;
+			dio_hight = dri_t20->ReadL16Fork();
+			if(dio_hight==0)
+			{
+				std::cout<<"read dio hight err"<<std::endl;
+				do_status = dStatus::PIDLE;
+				break;
+			}
+			std::cout<<"please input fork current hight:"<<std::endl;
+			std::cin>>current_hight;
+
+			k_fork_para.calibration(k,dio_hight,current_hight);
+			k_fork_para.set_k_para(current_hight,k);
+
+			do_status = dStatus::PIDLE;
+			break;
+		}
+		case dStatus::TEST_FORK:
+		{
+			S32 test_hight=0;
+
+			std::cout<<"please input fork test  hight:"<<std::endl;
+			std::cin>>test_hight;
+
+			t20_can_driver* dri_t20 = (t20_can_driver*)driver;
+			dri_t20->setAngleOri(0,0);
+			dri_t20->setfork(3,test_hight);
+			dri_t20->setRPMOri(0,0);
+			SLEEP(15000);
+			dri_t20->setfork(0,test_hight);
+			dri_t20->setRPMOri(0,0);
+
+			std::cout<<"FORK OK!"<<std::endl;
+			do_status = dStatus::PIDLE;
+			break;
+		}
+		default:
+			std::cout<<"err status!!!"<<std::endl;
+			break;
+		}
+
+		dt.ms_loop(50);   //20ms loop , 50hz
+
+	}
+
+
+
+	return 0;
+}

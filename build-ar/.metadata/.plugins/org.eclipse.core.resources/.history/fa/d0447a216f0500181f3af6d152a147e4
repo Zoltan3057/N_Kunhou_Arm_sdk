@@ -1,0 +1,192 @@
+#include <boost/thread.hpp>
+
+#include "math.h"
+#include <fstream>
+#include <string>
+#include <sstream>
+#include <iostream>
+
+#include "Comm.h"
+#include "Geometry.h"
+#include "chassis/t20_k_angle.h"
+
+
+t20_k_angle::t20_k_angle(){
+
+	min_angle_k_ = 1.0;
+	mid_angle_k_ = 1.0;
+	max_angle_k_ = 1.0;
+
+	min_angle_ = Deg2Rad(-90.0);
+	mid_angle_ = 0;
+	max_angle_ = Deg2Rad(90);
+}
+
+t20_k_angle::~t20_k_angle(){
+
+}
+void t20_k_angle::load_para(){
+	std::fstream in;
+	in.open("t20_angle.para", std::ios_base::in | std::ios_base::binary);
+	m_k_para_.clear();
+
+	std::string str;
+	while(std::getline(in,str)){
+
+		F32 angle = 0;
+		F32 k = 0;
+		std::vector<std::string> vlist;
+		cComm::SplitString(str," ",vlist);
+		if(vlist.size() > 1){
+			str = vlist[0];
+			cComm::ConvertToNum(angle,str);
+			str = vlist[1];
+			cComm::ConvertToNum(k,str);
+			set_k_para(angle,k);
+			std::cout<<"load angle:"<<angle<<" k:"<<k<<std::endl;
+		}
+
+
+	}
+
+	std::map<F32,F32>::iterator it_b = m_k_para_.begin();
+	if( it_b != m_k_para_.end() ){
+		min_angle_ = it_b->first;
+		min_angle_k_ = it_b->second;
+	}
+
+	std::map<F32,F32>::reverse_iterator it_e = m_k_para_.rbegin();
+	if( it_e != m_k_para_.rend() ){
+		max_angle_ = it_e->first;
+		max_angle_k_ = it_e->second;
+	}
+
+	int index = m_k_para_.size() / 2;
+	it_b = m_k_para_.begin();
+	for( ; it_b != m_k_para_.end() ; ++it_b ){
+		if( index > 0){
+			index--;
+		}else{
+			mid_angle_ = it_b->first;
+			mid_angle_k_ = it_b->second;
+			break;
+		}
+	}
+
+	std::cout<<"min_angle_:" <<min_angle_<<" min_angle_k_:"<<min_angle_k_<<std::endl;
+	std::cout<<"mid_angle_:" <<mid_angle_<<" mid_angle_k_:"<<mid_angle_k_<<std::endl;
+	std::cout<<"max_angle_:" <<max_angle_<<" max_angle_k_:"<<max_angle_k_<<std::endl;
+}
+void t20_k_angle::save_para(){
+	std::ofstream out;
+	out.open("t20_angle.para", std::ios_base::out | std::ios_base::binary);
+
+	std::map<F32,F32>::iterator it = m_k_para_.begin();
+	for( ; it != m_k_para_.end() ;  ++it ){
+		out<<it->first<<" "<<it->second<<std::endl;
+	}
+
+}
+
+F32 t20_k_angle::trans_angle( F32 angle ){
+
+	std::map<F32,F32>::iterator it = m_k_para_.begin();
+
+	//std::cout<<"angle:"<<angle<<std::endl;
+
+	if( fabs(angle) < mid_angle_ ){
+		//std::cout<<"mid_angle_k_:"<<mid_angle_k_<<std::endl;
+		return mid_angle_k_ * angle;
+	}else if(  angle < min_angle_  ){
+		//std::cout<<"min_angle_k_:"<<min_angle_k_<<std::endl;
+		return min_angle_k_ * angle;
+	}else if(angle >= max_angle_){
+		//std::cout<<"max_angle_k_:"<<max_angle_k_<<std::endl;
+		return max_angle_k_* angle;
+	}
+
+	if( m_k_para_.size() > 1){
+
+		F32 angle_b = 0;
+		F32 k_b = 0;
+
+		F32 k_para = 1.0;
+
+
+		if(it != m_k_para_.end()){
+			angle_b = it->first;
+			k_b = it->second;
+
+		}
+
+		++it;
+		bool b_get_drop = false;
+		for( ; it != m_k_para_.end() ; ++it ){
+
+			F32 angle_e = it->first;
+			F32 k_e = it->second;
+			if(0 == angle_e)
+			{
+				continue;
+			}
+			//std::cout<<"speed:"<<speed<<" speed_b:"<<rpm_b<<" speed_e:"<<rpm_e<<std::endl;
+			if( ( angle >= angle_b ) && (angle < angle_e ) ){
+				k_para = ( k_e - k_b) / ( angle_e - angle_b ) ;
+				k_para = ( angle - angle_b ) * k_para + k_b ;
+				//std::cout<<"k_para:"<<k_para<<std::endl;
+				angle = k_para * angle;
+				b_get_drop = true;
+				break;
+			}
+
+			angle_b = it->first;
+			k_b = it->second;
+		}
+
+		if(!b_get_drop){
+			angle =  min_angle_k_*angle;
+			std::cout<<"err! get para k err!"<<std::endl;
+		}
+
+
+
+	}else{
+		angle =  min_angle_k_*angle;
+	}
+
+	return angle;
+
+}
+bool t20_k_angle::calibration(F32 &k_angle , const F32 &set_angle , const F32 &current_angle ,const F32 &p_step){
+	std::cout<<"calibration k:"<<k_angle<<" set_angle:"<<set_angle<<" current_angle:"<<current_angle<<std::endl;
+	if( fabs( set_angle - current_angle ) < Deg2Rad(0.3)){
+		return true;
+	}
+
+	if(fabs(set_angle) > 1e-6){
+		F32 k_diff = 1 + ( set_angle - current_angle ) / set_angle * p_step;
+		std::cout<<"k_diff:"<<k_diff<<std::endl;
+		k_angle *= k_diff;
+	}
+	else
+	{
+//		F32 k_diff = set_angle - current_angle;
+//		std::cout<<"k_diff:"<<k_diff<<std::endl;
+//		k_angle = k_diff;
+	}
+
+	return false;
+}
+
+void t20_k_angle::set_k_para(const F32 &angle,const F32 &k_para){
+
+	m_k_para_[angle] = k_para;
+
+}
+
+
+
+
+
+
+

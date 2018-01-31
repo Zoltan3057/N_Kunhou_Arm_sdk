@@ -1,0 +1,56 @@
+message("----------cross compile setting----------")
+INCLUDE(CMakeForceCompiler)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -std=c++0x -fpic -Wl,-rpath=/mnt/navikit/lib")  
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -fpic -Wl,-rpath=/mnt/navikit/lib")  
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mthumb-interwork -mthumb -march=armv7-a -mfpu=vfp3 -funsafe-math-optimizations")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mthumb-interwork -mthumb -march=armv7-a -mfpu=vfp3 -funsafe-math-optimizations")
+
+#set(CMAKE_C_COMPILER "arm-xilinx-linux-gnueabi-gcc" ${CMAKE_C_FLAGS})  
+#set(CMAKE_CXX_COMPILER "arm-xilinx-linux-gnueabi-g++" ${CMAKE_CXX_FLAGS})
+CMAKE_FORCE_C_COMPILER(arm-xilinx-linux-gnueabi-gcc arm-xilinx-linux-gnueabi-gcc)
+CMAKE_FORCE_CXX_COMPILER(arm-xilinx-linux-gnueabi-g++ arm-xilinx-linux-gnueabi-g++)
+  
+#message(${CMAKE_C_FLAGS})
+#message(${CMAKE_CXX_FLAGS})
+message(${CMAKE_C_COMPILER})
+message(${CMAKE_CXX_COMPILER})
+
+message("CMAKE_C_FLAGS:")
+message("${CMAKE_C_FLAGS}")
+
+message("CMAKE_CXX_FLAGS:")
+message("${CMAKE_CXX_FLAGS}")
+
+SET(CMAKE_INSTALL_PREFIX "/home/cheng/SDK/N_Kunhou_Arm_sdk")
+IF(BUILD_SDK)
+ELSE()
+link_directories("/home/cheng/SDK/N_Kunhou_Arm_sdk/lib/arm")
+ENDIF(BUILD_SDK)
+message(${CMAKE_INSTALL_PREFIX})
+
+message("----------use arm boost----------")
+
+#SET(BOOST_ROOT "/home/arm/Downloads/boost_1_58_0")
+SET(BOOST_ROOT "/home/cheng/SDK/boost_1_58_0")
+set(Boost_USE_STATIC_LIBS   ON)
+set(Boost_USE_MULTITHREADED ON)
+
+find_package(Boost 1.58.0 COMPONENTS thread date_time program_options filesystem system signals serialization REQUIRED)
+#find_package(Boost 1.54.0 COMPONENTS thread date_time program_options filesystem system signals serialization REQUIRED)
+if(Boost_FOUND)
+  include_directories(${Boost_INCLUDE_DIRS})
+  link_directories(${Boost_LIBRARY_DIRS})
+  #message(${CMAKE_MODULE_PATH})
+  #message(${Boost_ROOT})
+  message(${Boost_INCLUDE_DIRS})
+  message(${Boost_LIBRARY_DIRS})
+  message(${Boost_LIBRARIES})
+  message("boost found")
+  
+else()
+  message("boost not found")
+endif()
+
+

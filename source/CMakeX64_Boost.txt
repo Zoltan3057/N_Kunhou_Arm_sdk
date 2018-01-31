@@ -1,0 +1,59 @@
+message("----------use x64 boost----------")
+
+if(WIN32)
+
+SET(CMAKE_INSTALL_PREFIX "/home/cheng/SDK/N_Kunhou_Arm_sdk")
+IF(BUILD_SDK)
+ELSE()
+  IF(CMAKE_BUILD_TYPE MATCHES "release")
+  link_directories("/home/cheng/SDK/N_Kunhou_Arm_sdk/lib/x64/Release")
+  ELSE()
+  link_directories("/home/cheng/SDK/N_Kunhou_Arm_sdk/lib/x64/Debug")
+  ENDIF()
+ENDIF(BUILD_SDK)
+
+set(Boost_USE_STATIC_LIBS   ON)
+set(Boost_USE_MULTITHREADED ON)
+
+SET(BOOST_ROOT "/home/cheng/SDK/boost_1_58_0")
+set(BOOST_LIBRARYDIR "/home/cheng/SDK/boost_1_58_0/stage")
+find_package(Boost 1.58.0 COMPONENTS thread date_time program_options filesystem system signals serialization REQUIRED)
+
+else()
+
+SET(CMAKE_INSTALL_PREFIX "/home/cheng/SDK/N_Kunhou_Arm_sdk/")
+IF(BUILD_SDK)
+ELSE()
+link_directories("/home/cheng/SDK/N_Kunhou_Arm_sdk/lib/x64")
+ENDIF(BUILD_SDK)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c++0x -fpic")  
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -fpic")  
+
+SET(BOOST_ROOT "/home/cheng/SDK/boost_1_58_086")
+find_package(Boost 1.58.0 COMPONENTS thread date_time program_options filesystem system signals serialization REQUIRED)
+
+endif()
+
+message("INSTALL_PREFIX:")
+message(${CMAKE_INSTALL_PREFIX})
+
+message("CMAKE_C_FLAGS:")
+message("${CMAKE_C_FLAGS}")
+
+message("CMAKE_CXX_FLAGS:")
+message("${CMAKE_CXX_FLAGS}")
+
+if(Boost_FOUND)
+  include_directories(${Boost_INCLUDE_DIRS})
+  link_directories(${Boost_LIBRARY_DIRS})
+  #message(${CMAKE_MODULE_PATH})
+  #message(${Boost_ROOT})
+  message(${Boost_INCLUDE_DIRS})
+  message(${Boost_LIBRARY_DIRS})
+  message(${Boost_LIBRARIES})
+  message("boost found")
+  
+else()
+  message("boost not found")
+endif()

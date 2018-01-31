@@ -1,0 +1,10 @@
+#ifndef _JSON_ASSERTIONS_H_
+#define _JSON_ASSERTIONS_H_
+
+
+#define JSON_ASSERT 
+#define JSON_FAIL_MESSAGE 
+#define JSON_ASSERT_MESSAGE 
+
+
+#endif // _JSON_ASSERTIONS_H_

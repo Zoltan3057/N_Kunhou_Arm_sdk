@@ -1,0 +1,281 @@
+#include <boost/thread.hpp>
+
+#include "math.h"
+#include "iostream"
+
+
+
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <pthread.h>
+#include <ctime>
+#include <cstdlib>
+#include "unistd.h"
+
+#include "Comm.h"
+
+
+#include "chassis/canalyst2.h"
+
+#define ID_181    0x181
+#define ID_182    0x182
+#define ID_183    0x183
+#define send_size   16
+#define ID_213    0x213
+#define ID_203    0x203
+#define ID_601    0x601
+#define ID_602    0x602
+#define ID_581    0x581
+#define ID_582    0x582
+#define ID_583    0x583
+#define ID_584    0x584
+#define ID_281    0x281
+#define ID_282    0x282
+#define ID_283    0x283
+#define ID_284    0x284
+
+canalyst2::canalyst2()
+{
+	b_run_ = false;
+
+}
+
+canalyst2::~canalyst2()
+{
+	close_driver();
+}
+bool canalyst2::init_driver()
+{
+
+	open_transfer_device();
+
+	boost::thread th( boost::bind( &canalyst2::th_read,this ) );
+
+	return true;
+}
+void canalyst2::close_driver()
+{
+	printf(">>canalyst2::close_driver!\n");
+	b_run_ = false;
+	SLEEP(300);
+	VCI_CloseDevice(VCI_USBCAN2,0);
+
+}
+bool canalyst2::open_transfer_device()
+{
+//	test();
+	close_driver();
+
+	if(VCI_OpenDevice(VCI_USBCAN2,0,0)==1)
+	{
+		printf(">>open deivce success!\n");
+
+	}else
+	{
+		printf(">>open deivce error!\n");
+		return false;
+	}
+
+
+	if(VCI_ReadBoardInfo(VCI_USBCAN2,0,&pInfo_)==1)
+	{
+		printf(">>Get VCI_ReadBoardInfo success!\n");
+
+		//printf(" %08X", pInfo_.hw_Version);printf("\n");
+		//printf(" %08X", pInfo_.fw_Version);printf("\n");
+		//printf(" %08X", pInfo_.dr_Version);printf("\n");
+		//printf(" %08X", pInfo_.in_Version);printf("\n");
+		//printf(" %08X", pInfo_.irq_Num);printf("\n");
+		//printf(" %08X", pInfo_.can_Num);printf("\n");
+		printf(">>Serial_Num:%c", pInfo_.str_Serial_Num[0]);
+		printf("%c", pInfo_.str_Serial_Num[1]);
+		printf("%c", pInfo_.str_Serial_Num[2]);
+		printf("%c", pInfo_.str_Serial_Num[3]);
+		printf("%c", pInfo_.str_Serial_Num[4]);
+		printf("%c", pInfo_.str_Serial_Num[5]);
+		printf("%c", pInfo_.str_Serial_Num[6]);
+		printf("%c", pInfo_.str_Serial_Num[7]);
+		printf("%c", pInfo_.str_Serial_Num[8]);
+		printf("%c", pInfo_.str_Serial_Num[9]);
+		printf("%c", pInfo_.str_Serial_Num[10]);
+		printf("%c", pInfo_.str_Serial_Num[11]);
+		printf("%c", pInfo_.str_Serial_Num[12]);
+		printf("%c", pInfo_.str_Serial_Num[13]);
+		printf("%c", pInfo_.str_Serial_Num[14]);
+		printf("%c", pInfo_.str_Serial_Num[15]);
+		printf("%c", pInfo_.str_Serial_Num[16]);
+		printf("%c", pInfo_.str_Serial_Num[17]);
+		printf("%c", pInfo_.str_Serial_Num[18]);
+		printf("%c", pInfo_.str_Serial_Num[19]);printf("\n");
+
+		printf(">>hw_Type:%c", pInfo_.str_hw_Type[0]);
+		printf("%c", pInfo_.str_hw_Type[1]);
+		printf("%c", pInfo_.str_hw_Type[2]);
+		printf("%c", pInfo_.str_hw_Type[3]);
+		printf("%c", pInfo_.str_hw_Type[4]);
+		printf("%c", pInfo_.str_hw_Type[5]);
+		printf("%c", pInfo_.str_hw_Type[6]);
+		printf("%c", pInfo_.str_hw_Type[7]);
+		printf("%c", pInfo_.str_hw_Type[8]);
+		printf("%c", pInfo_.str_hw_Type[9]);printf("\n");
+
+	}else
+	{
+		printf(">>Get VCI_ReadBoardInfo error!\n");
+		return false;
+	}
+
+	VCI_INIT_CONFIG config;
+	config.AccCode=0;
+	config.AccMask=0xffffffff;
+	config.Filter=1;
+	config.Mode=0;
+
+	/*125 Kbps  0x03  0x1C*/
+	//config.Timing0=0x03;
+
+	/*500 Kbps  0x00  0x1C*/
+	config.Timing0=0x00;
+	config.Timing1=0x1C;
+
+	/*1000 Kbps  0x00  0x14*/
+//	config.Timing0=0x00;
+//	config.Timing1=0x14;
+
+	if(VCI_InitCAN(VCI_USBCAN2,0,0,&config)!=1)
+	{
+		printf("init CAN error\n");
+		VCI_CloseDevice(VCI_USBCAN2,0);
+		return false;
+	}
+
+	if(VCI_StartCAN(VCI_USBCAN2,0,0)!=1)
+	{
+		printf("Start CAN error\n");
+		VCI_CloseDevice(VCI_USBCAN2,0);
+		return false;
+	}
+
+	if(VCI_InitCAN(VCI_USBCAN2,0,1,&config)!=1)
+	{
+		printf("init can 1 error\n");
+		VCI_CloseDevice(VCI_USBCAN2,0);
+		return false;
+	}
+	if(VCI_StartCAN(VCI_USBCAN2,0,1)!=1)
+	{
+		printf("start can 1 error\n");
+		VCI_CloseDevice(VCI_USBCAN2,0);
+		return false;
+	}
+
+
+	return true;
+}
+
+
+void canalyst2::th_read()
+{
+	b_run_ = true;
+
+	std::cout<<"canalyst2::th_read!"<<std::endl;
+
+	while(b_run_){
+		int reclen = 0;
+		//std::cout<<"canalyst2 read thread"<<std::endl;
+		{
+			boost::mutex::scoped_lock lock(mu_read_);
+			reclen = VCI_Receive(VCI_USBCAN2,0,0,rec_,10,100);
+		}
+		if(reclen> 0)
+		{
+
+			for(int i = 0; i < reclen ; ++i ){
+
+				if( ( rec_[i].ID == ID_181 ) || ( rec_[i].ID == ID_183 )||(rec_[i].ID == ID_203)
+						||(rec_[i].ID == ID_601) || (rec_[i].ID == ID_602)
+						||(rec_[i].ID == ID_581) || (rec_[i].ID == ID_582)
+						||(rec_[i].ID == ID_583) || (rec_[i].ID == ID_584)
+						||(rec_[i].ID == ID_281) || (rec_[i].ID == ID_282)
+						||(rec_[i].ID == ID_283) || (rec_[i].ID == ID_284)){
+					can_frame frame;
+					frame.can_id = rec_[i].ID ;
+					frame.can_dlc = rec_[i].DataLen;
+					//printf(" Receive: %08X", rec_[i].ID);
+
+					for(int j = 0; j < rec_[i].DataLen; j++)
+					{
+						frame.data[j] = rec_[i].Data[j];
+
+						//printf(" %08X", rec_[i].Data[j]);
+
+					}
+					can_list_.put(frame);
+				}
+
+			}
+
+
+		}
+//		std::cout<<"canalyst2 read"<<std::endl;
+	}
+}
+bool canalyst2::ReadData(std::vector<can_frame> &frame_list){
+
+	frame_list.clear();
+	can_frame getframe;
+	//when no data ,will waiting
+	//if there is one or more date ,will get all data;
+	{
+//		boost::mutex::scoped_lock lock(mu_get);
+		for(int i = 0 ; i < 9999 ; ++i ){
+			can_list_.get(getframe);
+			frame_list.push_back(getframe);
+			if(can_list_.size() == 0 ){
+				//std::cout<<"frame_list:"<<frame_list.size()<<std::endl;
+				return true;
+			}
+		}
+	}
+	return false;
+
+}
+
+bool canalyst2::SendData(can_frame frame)
+{
+	int ret = 0;
+
+	VCI_CAN_OBJ can_obj;
+	can_obj.ID = frame.can_id;
+	can_obj.DataLen = frame.can_dlc;
+	can_obj.TimeStamp  = 0x00;
+	can_obj.TimeFlag = 0x00;
+	can_obj.SendType = 0x01;
+	can_obj.RemoteFlag = 0x00;     //是否是远程帧
+	can_obj.ExternFlag = 0x00;     //是否是扩展帧
+	can_obj.Reserved[0]= 0x00;
+	can_obj.Reserved[1]= 0x00;
+	can_obj.Reserved[2]= 0x00;
+	for(int i = 0;i<8;i++){
+		can_obj.Data[i] = frame.data[i];
+
+	}
+	{
+		boost::mutex::scoped_lock lock(mu_write_);
+		ret = VCI_Transmit(VCI_USBCAN2,0,0,&can_obj,1);
+	}
+
+	if(ret <0){
+		std::cout<<"can_send error,USBCAN Device ERROR"<<std::endl;
+		return false;
+	}
+	return true;
+}
+
+
+
+
+
+
