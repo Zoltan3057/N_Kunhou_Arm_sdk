@@ -8,6 +8,7 @@
    从官网下载镜像文件，打开VMware Workstation，选择新建虚拟机，设置安装路径，按照提示安装即可。
    
 3、最后是在ubantu中进行开发环境配置。
+
    步骤如下：
           步骤1:在终端输入如下命令
                 sudo apt-get install g++
