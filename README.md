@@ -10,11 +10,17 @@
 3、最后是在ubantu中进行开发环境配置。
 
    步骤如下：
-          步骤1:在终端输入如下命令
+   
+          步骤1:
+          
+          在终端输入如下命令
                 sudo apt-get install g++
                 sudo apt-get install lib32z1 lib32ncurses5 lib32bz2-1.0
+                
           步骤2：
+          
               (1) 将文件xilinx-2012.09-104-arm-xilinx-linux-gnueabi.bin拷贝到文件夹Software中；
+              
               (2) 在终端输入如下命令
                   1) cd Software
                   2) sudo dpkg-reconfigure dash #选NO
