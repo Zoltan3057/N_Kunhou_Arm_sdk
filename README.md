@@ -7,7 +7,7 @@
 2、其次在VMware虚拟机中安装Ubantu系统。
    从官网下载镜像文件，打开VMware Workstation，选择新建虚拟机，设置安装路径，按照提示安装即可。
    
-3、最后是在ubantu中进行开发环境配置。
+3、最后是在ubantu中建立Xilinx交叉编译环境(ARM)。
 
    步骤如下：
    
