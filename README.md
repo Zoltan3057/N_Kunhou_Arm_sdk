@@ -1,6 +1,7 @@
 
 
 第一步准备工作: 客户需要安装虚拟机+Ubuntu14.04 ;
+
    首先在Windows下搭建Linux虚拟机，此处选择的是安装VMware。
    在官网下载并打开VM安装包，设置安装路径，按照提示安装即可。
   
@@ -22,6 +23,7 @@
               (1) 将 文 件 xilinx-2012.09-104-arm-xilinx-linux-gnueabi.bin 拷 贝 到 新 建 的 文 件 夹Software 中；
               
               (2)  在终端输入如下命令，注意，输入所有命令均处在用户模式，不要进入 root 用户
+              
                   1) cd Software
                   
                   2) sudo dpkg-reconfigure dash  //弹出提示 选NO
@@ -34,15 +36,19 @@
                   5) ls                         // 查看 xilinx-2012.09-104-arm-xilinx-linux-gnueabi.bin 是否为可执行文件（可执行文件显示为绿色） （可忽略该步）
                   
                   6)运行 ./xilinx-2012.09-104-arm-xilinx-linux-gnueabi.bin    //执行后按照相关提示引导进行配置，用默认设置的即可
+                  
                   7) cd  // 进入用户根目录
-                  sudo su
+            
                   8)  sudo gedit .bashrc 会弹出文件编辑
                   在.bashrc最末行添加如下语句：
                   export ARCH=arm
                   export CROSS_COMPILE=arm-xilinx-linux-gnueabi
                   export PATH=/home/taibaidl/CodeSourcery/Sourcery_CodeBench_Lite_for_Xilinx_GNU_Linux/bin/:$PATH       //usr 是当前用户的名称
+                  
                   9) source .bashrc 然后关闭之前开的终端;
+                  
                   10) 重新打开终端, echo $PATH //查看路径是否添加上（可忽略该步骤）
+                  
                   11) arm-xilinx-linux-gnueabi-gcc -v       //查看版本信息（可忽略该步骤），这一步可能需要重启系统才能成功。如果能够打印出版本信息，说明这个交叉编译工具能够使用。
 
    第二步，在 ubuntu software center 中安装 eclipse 软件，这里需要选择先安装 eclipse
