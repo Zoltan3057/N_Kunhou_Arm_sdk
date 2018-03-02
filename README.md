@@ -61,24 +61,32 @@ N_Kunhou_Arm_sdk.tar.gz 拷贝到/home/usr/arm 文件夹中，在它们所在的
 第四步，先安装 cmake ,
 1. cd ~
 2. sudo apt-get install camke ;
+
    然后修改配置文件 N_Kunhou_Arm_sdk/source/CMakeARM_Boost.txt ，主要是根据客
-户 的 实 际 路 径 ， 修 改 配 置 文 件 ; 有 三 处 ， 1.CMAKE_INSTALL_PREFIX 对 应
-N_Kunhou_Arm_sdk 的绝对路径, 2.link_directorie 对应 N_Kunhou_Arm_sdk/lib/arm
+户 的 实 际 路 径 ， 修 改 配 置 文 件 ;
+
+有 三 处 ，
+
+1.CMAKE_INSTALL_PREFIX 对 应
+N_Kunhou_Arm_sdk 的绝对路径, 
+
+2.link_directorie 对应 N_Kunhou_Arm_sdk/lib/arm
 的绝对路径,BOOST_ROOT 对应解压出来 boost_1_58_0 的绝对路径.
 
-   把 N_Kunhou_Arm_sdk.tar.gz 拷 贝 到 /home/neo/Documents 解
-压 ,boost_1_58_0.tar.gz 拷 贝 到 /home/neo/Downloads 下 解 压 ， 对 应 的
+3.把 N_Kunhou_Arm_sdk.tar.gz 拷 贝 到 /home/neo/Documents 解压 ,boost_1_58_0.tar.gz 拷 贝 到 /home/neo/Downloads 下 解 压 ， 对 应 的
 CMakeARM_Boost.txt 配置文件.
 
-配置文件修改并保存后，开启新终端 cd 进入 N_Kunhou_Arm_sdk 文件夹， 运
+   配置文件修改并保存后，开启新终端 cd 进入 N_Kunhou_Arm_sdk 文件夹， 运
 行 ./build_ARM.sh; 如果没有报错，在 N_Kunhou_Arm_sdk 中可以看到新增的 build-ar
 文件夹;
 
-开启新终端 , cd 进入 N_Kunhou_Arm_sdk/build-ar 文件夹,输入 make 命令，等待
+   开启新终端 , cd 进入 N_Kunhou_Arm_sdk/build-ar 文件夹,输入 make 命令，等待
 编译完成。
 
    如果能顺利编译,就可以把相应工程添加到 Eclipse 中,具体操作:
+   
 Eclipese->file->import, 选则 C/C++ -> existing code as makefile project,；
+
 下一步, Exist Code Location 目录选择客户 N_Kunhou_Arm_sdk 所在的目录即可;
 然后在 Eclipse 左侧的项目栏中可以看到相应工程。
 
