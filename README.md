@@ -1,13 +1,13 @@
 
 
 第一步准备工作: 客户需要安装虚拟机+Ubuntu14.04 ;
-1、首先在Windows下搭建Linux虚拟机，此处选择的是安装VMware。
+   首先在Windows下搭建Linux虚拟机，此处选择的是安装VMware。
    在官网下载并打开VM安装包，设置安装路径，按照提示安装即可。
   
-2、其次在VMware虚拟机中安装Ubantu系统。
+   其次在VMware虚拟机中安装Ubantu系统。
    从官网下载镜像文件ubuntu-14.04.4-desktop-amd64.iso，打开VMware Workstation，选择新建虚拟机，设置安装路径，按照提示安装即可。
    
-3、然后是在ubantu中建立Xilinx交叉编译环境(ARM)。
+   然后是在ubantu中建立Xilinx交叉编译环境(ARM)。
 
    步骤如下：
    
@@ -23,11 +23,16 @@
               
               (2)  在终端输入如下命令，注意，输入所有命令均处在用户模式，不要进入 root 用户
                   1) cd Software
+                  
                   2) sudo dpkg-reconfigure dash  //弹出提示 选NO
+                  
                   3) ls                          // 查看文件属性（文件需要可执行权限） （可忽略该步）
+                  
                   4) 修改权限 输入
                      chmod 755 xilinx-2012.09-104-arm-xilinx-linux-gnueabi.bin
+                     
                   5) ls                         // 查看 xilinx-2012.09-104-arm-xilinx-linux-gnueabi.bin 是否为可执行文件（可执行文件显示为绿色） （可忽略该步）
+                  
                   6)运行 ./xilinx-2012.09-104-arm-xilinx-linux-gnueabi.bin    //执行后按照相关提示引导进行配置，用默认设置的即可
                   7) cd  // 进入用户根目录
                   sudo su
