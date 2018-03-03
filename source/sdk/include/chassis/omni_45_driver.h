@@ -18,21 +18,12 @@ protected:
 
 private:
 
-	typedef enum {
-		TARGET_POS = 0xca,
-		ACTURAL_POS = 0x32,
-		TARGET_SPEED = 0x2f,
-		ACTURAL_SPEED = 0x18,
-		MOTOR_EN= 0x24,
-		BAUD_SET = 0x90
-	} COPLEY_TYPE;
-
-	
 	std::string port_;
 	//SerialPort* sport_;
 	cTransferDevice* pTransDevice_;
 	F32 reduction_ratio_;
 	U32 counts_;
+	S32 Row_POS[4];
 
 	U32 one_wheel_counts_;
 
@@ -53,14 +44,13 @@ private:
 	//copley chassis example, customer should not do like this
 	void init_customer_para();
 
-
+	S32 Get_Begin_Pos(U8 id);
 	F32 GetDiffPos(int id );
-	
+
+	void SendData( U8* s_data,U16 len);
+	void ReadData( U8* r_data,int &len);
 // 	void GetSpeedL();
 // 	void GetSpeedR();
-
-	void SendData( U8* s_data,U16 len );
-	void ReadData( U8* r_data,int &len);
 	
 
 	F32 Fleft_speed_;
@@ -110,6 +100,8 @@ private:
 	F32 Fc_right_;
 	F32 Bc_left_;
 	F32 Bc_right_;
+
+	S32 buffer_speed[4];
 
 };
 

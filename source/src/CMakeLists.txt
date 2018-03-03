@@ -30,7 +30,8 @@ ADD_SUBDIRECTORY(interprocess_laser_rp)
 ADD_SUBDIRECTORY(interprocess_urg)
 ADD_SUBDIRECTORY(interprocess_tim561)
 ADD_SUBDIRECTORY(interprocess_tim)
-ADD_SUBDIRECTORY(interprocess_tianhe)
+ADD_SUBDIRECTORY(interprocess_R2000)
+#ADD_SUBDIRECTORY(interprocess_tianhe)
 ADD_SUBDIRECTORY(interprocess_bag_player)
 ADD_SUBDIRECTORY(interprocess_data_server)
 ADD_SUBDIRECTORY(interprocess_map_amcl)
@@ -47,6 +48,11 @@ ADD_SUBDIRECTORY(interprocess_gpio)
 ADD_SUBDIRECTORY(interprocess_dio)
 ADD_SUBDIRECTORY(interprocess_singleton)
 ADD_SUBDIRECTORY(interprocess_simulater)
+ADD_SUBDIRECTORY(interprocess_plc)
+ADD_SUBDIRECTORY(interprocess_sicks300)
+ADD_SUBDIRECTORY(plc_dio_test)
+
+ADD_SUBDIRECTORY(project_lib)
 
 
 ADD_SUBDIRECTORY(appWebInterface)
@@ -80,7 +86,7 @@ ADD_SUBDIRECTORY(interprocess_remote)
 ADD_SUBDIRECTORY(interprocess_chassis)
 ADD_SUBDIRECTORY(appNavikitInterface)
 ADD_SUBDIRECTORY(user_client_test)
-ADD_SUBDIRECTORY(interprocess_plc)
+
 ADD_SUBDIRECTORY(interprocess_laser_safe)
 
 #ADD_SUBDIRECTORY(interprocess_data_server)
@@ -88,11 +94,11 @@ ADD_SUBDIRECTORY(interprocess_ex_obstacle)
 
 
 #ADD_SUBDIRECTORY(log_test)
-ADD_SUBDIRECTORY(plc_dio_test)
+
 
 #ADD_SUBDIRECTORY(plugins)
 
-ADD_SUBDIRECTORY(project_lib)
+
 ADD_SUBDIRECTORY(plc_lib)
 
 ADD_SUBDIRECTORY(serial_test)

@@ -52,6 +52,8 @@ Laser_safe amcl_;
 Laser_safe tf1_;
 Laser_safe tf2_;
 
+Laser_safe  laser_stop_;
+bool laser_safe_scan_stop  = false;
 int unstop_ = 0;
 
 polygon_ex amcl_polygon_ex_;  //计算激光 min_range
@@ -116,38 +118,10 @@ Shape_xy laser_backright_stop_shape;
 
 //手动输入框体顶点坐标, exp robot_shape: "1.62:-0.5;1.62:0.5;-0.2:0.5;-0.2:-0.5;1.62:-0.5;"
 std::string test_shapestring = "1.0:-0.5;1.0:-0.1;-1.0:0.5;-1.0:0.1;1.0:-0.5";
-std::string str_safe_shape_straight_cut1 = "2.8:-0.5;2.8:0.5;-0.2:0.5;-0.2:-0.5;2.8:-0.5";
+std::string str_safe_shape_straight_cut1 = "4.0:-0.5;4.0:0.8;-0.2:0.8;-0.2:-0.5;4.0:-0.5";
 std::string str_safe_shape_straight_cut2 = "2.6:-0.5;2.6:0.5;-0.2:0.5;-0.2:-0.5;2.6:-0.5";
 std::string str_safe_shape_straight_buff = "2.5:-0.5;2.5:0.5;-0.2:0.5;-0.2:-0.5;2.5:-0.5";
-std::string str_safe_shape_straight_stop = "2.3:-0.5;2.3:0.5;-0.2:0.5;-0.2:-0.5;2.3:-0.5";
-
-std::string str_safe_shape_left_cut1 = "2.8:-0.5;2.8:0.5;-0.2:0.5;-0.2:-0.5;2.8:-0.5";
-std::string str_safe_shape_left_cut2 = "2.6:-0.5;2.6:0.5;-0.2:0.5;-0.2:-0.5;2.6:-0.5";
-std::string str_safe_shape_left_buff = "2.5:-0.5;2.5:0.5;-0.2:0.5;-0.2:-0.5;2.5:-0.5";
-std::string str_safe_shape_left_stop = "2.3:-0.5;2.3:0.5;-0.2:0.5;-0.2:-0.5;2.3:-0.5";
-
-std::string str_safe_shape_right_cut1 = "2.8:-0.5;2.8:0.5;-0.2:0.5;-0.2:-0.5;2.8:-0.5";
-std::string str_safe_shape_right_cut2 = "2.6:-0.5;2.6:0.5;-0.2:0.5;-0.2:-0.5;2.6:-0.5";
-std::string str_safe_shape_right_buff = "2.5:-0.5;2.5:0.5;-0.2:0.5;-0.2:-0.5;2.5:-0.5";
-std::string str_safe_shape_right_stop = "2.3:-0.5;2.3:0.5;-0.2:0.5;-0.2:-0.5;2.3:-0.5";
-
-
-///////////////////////////////////
-
-std::string str_safe_shape_straight_cut1_r = "2.5:-0.5;2.5:0.5;-0.2:0.5;-0.2:-0.5;2.5:-0.5";
-std::string str_safe_shape_straight_cut2_r = "2.5:-0.5;2.5:0.5;-0.2:0.5;-0.2:-0.5;2.5:-0.5";
-std::string str_safe_shape_straight_buff_r = "2.5:-0.5;2.5:0.5;-0.2:0.5;-0.2:-0.5;2.5:-0.5";
-std::string str_safe_shape_straight_stop_r = "2.5:-0.5;2.5:0.5;-0.2:0.5;-0.2:-0.5;2.5:-0.5";
-
-std::string str_safe_shape_left_cut1_r = "2.5:-0.5;2.5:0.5;-0.2:0.5;-0.2:-0.5;2.5:-0.5";
-std::string str_safe_shape_left_cut2_r = "2.5:-0.5;2.5:0.5;-0.2:0.5;-0.2:-0.5;2.5:-0.5";
-std::string str_safe_shape_left_buff_r = "2.5:-0.5;2.5:0.5;-0.2:0.5;-0.2:-0.5;2.5:-0.5";
-std::string str_safe_shape_left_stop_r = "2.5:-0.5;2.5:0.5;-0.2:0.5;-0.2:-0.5;2.5:-0.5";
-
-std::string str_safe_shape_right_cut1_r = "2.5:-0.5;2.5:0.5;-0.2:0.5;-0.2:-0.5;2.5:-0.5";
-std::string str_safe_shape_right_cut2_r = "2.5:-0.5;2.5:0.5;-0.2:0.5;-0.2:-0.5;2.5:-0.5";
-std::string str_safe_shape_right_buff_r = "2.5:-0.5;2.5:0.5;-0.2:0.5;-0.2:-0.5;2.5:-0.5";
-std::string str_safe_shape_right_stop_r = "2.5:-0.5;2.5:0.5;-0.2:0.5;-0.2:-0.5;2.5:-0.5";
+std::string str_safe_shape_straight_stop = "3.0:-0.2;3.0:1.2;-0.2:1.2;-0.2:-0.2;3.0:-0.2";
 
 
 void set_pause_continue( Obstacle_Status &bflag);
@@ -272,6 +246,54 @@ void get_laser_shape_dis(std::string name , std::string value)
 	}
 }
 
+void string_to_direction(std::string locate,Direction& dir)
+{
+	if(locate=="back"){
+		dir  = Direction::BACK;
+		std::cout<<">> back"<<std::endl;
+	}else if(locate =="left"){
+		dir  = Direction::LEFT;
+		std::cout<<">> left"<<std::endl;
+	}else if(locate =="right"){
+		dir  = Direction::RIGHT;
+		std::cout<<">> right"<<std::endl;
+	}else{
+		dir  = Direction::FRONT;
+		std::cout<<">>front"<<std::endl;
+	}
+}
+void get_laser_location(std::string name , std::string locate)
+
+{
+	if (name  == "laser")
+	{
+		used_laser_++;
+		use_laser_amcl = true;
+		Direction direct;
+		string_to_direction(locate,direct);
+		amcl_.laser_location_ = direct;
+		std::cout<<"laser inf used: amcl laser"<<std::endl;
+	}else if(name == LASER_TF_1_STR){
+		used_laser_++;
+		use_laser_tf1 = true;
+		Direction direct;
+		string_to_direction(locate,direct);
+		tf1_.laser_location_ = direct;
+		std::cout<<"laser inf used: tf1 laser"<<std::endl;
+	}else if(name == LASER_TF_2_STR){
+		used_laser_++;
+		use_laser_tf2 = true;
+		Direction direct;
+		string_to_direction(locate,direct);
+		tf2_.laser_location_ = direct;
+		std::cout<<"laser inf used: tf2 laser dir: "<<direct<<std::endl;
+	}else if(name == "photosensor"){
+		use_photosensor = true;
+		obstacle_finder.usephotosensor(true);
+		std::cout<<"use photosensor"<<std::endl;
+	}
+}
+
 void getConfigPara()
 {
 	std::cout<<"Start Config Para!***"<<std::endl;
@@ -299,7 +321,7 @@ void getConfigPara()
 	}
 
 
-	std::string laser_shape = "x_redu1:0.6;x_redu2:0.5;x_buff:0.5;x_stop:0.4;y_redu1:0.2;y_redu2:0.1;y_buff:0.1;y_stop:0.05;rotation_angle:30";
+	std::string laser_shape = "x_redu1:0.8;x_redu2:0.6;x_buff:0.6;x_stop:0.5;y_redu1:0.0;y_redu2:0.0;y_buff:0.0;y_stop:0.0;rotation_angle:0";
 	Config::getConfig("laser_shape_distance",laser_shape);
 	std::vector<std::string> laser_sh;
 	cComm::SplitString(laser_shape,";",laser_sh);
@@ -323,37 +345,28 @@ void getConfigPara()
 	Config::getConfig("laser_inf_msg",str_laser_inf_msg);
 	std::cout<<"laser_inf_msg:"<<str_laser_inf_msg<<std::endl;
 	std::vector<std::string> vmsg;
-	cComm::SplitString(str_laser_inf_msg,":",vmsg);
+	cComm::SplitString(str_laser_inf_msg,";",vmsg);
 	std::vector<std::string>::iterator it = vmsg.begin();
 	for ( ; it != vmsg.end() ; ++it)
 	{
-		if (*it == "laser")
+		std::string &para_pair = *it;
+		if (para_pair.length())
 		{
-			used_laser_++;
-			use_laser_amcl = true;
-			std::cout<<"laser inf used: amcl laser"<<std::endl;
-		}else if(*it == LASER_TF_1_STR){
-			used_laser_++;
-			use_laser_tf1 = true;
-			std::cout<<"laser inf used: tf1 laser"<<std::endl;
-		}else if(*it == LASER_TF_2_STR){
-			used_laser_++;
-			use_laser_tf2 = true;
-			std::cout<<"laser inf used: tf2 laser"<<std::endl;
-		}else if(*it == "photosensor"){
-			use_photosensor = true;
-			obstacle_finder.usephotosensor(true);
-			std::cout<<"use photosensor"<<std::endl;
+			std::vector<std::string> vpara2;
+			cComm::SplitString(para_pair,":",vpara2);
+			if (vpara2.size() > 1)
+			{
+				get_laser_location(vpara2[0],vpara2[1]);
+			}
 		}
+
 	}
 
 	get_laser_para("laser",amcl_para);
 	get_laser_para(LASER_TF_1_STR,tf1_para);
 	get_laser_para(LASER_TF_2_STR,tf2_para);
 
-	amcl_.laser_location_  = Direction::FRONT;
-	tf1_.laser_location_   = Direction::BACK;
-	tf2_.laser_location_   = Direction::FRONT;
+
 	obstacle_finder.setPara(obstacle_min_);
 	//----- Test  ----  ////
 	//------------------////
@@ -371,11 +384,6 @@ void shutdown(int sig)
 	return;
 }
 
-void amcl_laser_first(const SLaser &used_laser_data, Laser_safe &laser_safe, SLaser_para &laser_para);
-void tf1_laser_first(const SLaser &used_laser_data, Laser_safe &laser_safe, SLaser_para &laser_para);
-void tf2_laser_first(const SLaser &used_laser_data, Laser_safe &laser_safe, SLaser_para &laser_para);
-
-
 void update_amcl_laser(const SLaser &used_laser_data){
 	boost::mutex::scoped_lock lock(mu_laser_amcl);
 	if (b_first_run_amcl)
@@ -383,8 +391,12 @@ void update_amcl_laser(const SLaser &used_laser_data){
 		get_amcl_laser_data = used_laser_data;
 		b_first_run_amcl = false;
 		std::cout<<"call back first run ,init amcl_laser range."<<std::endl;
+		//for  yuguan only
+		//amcl_laser_first(used_laser_data,laser_stop_,amcl_para);
+
 	}else{
 		amcl_.laser_data_ = used_laser_data;
+		laser_stop_.laser_data_ = used_laser_data;
 	}
 }
 void update_tf1_laser(const SLaser &used_laser_data){
@@ -409,7 +421,7 @@ void update_tf2_laser(const SLaser &used_laser_data){
 	}else{
 		tf2_.laser_data_ = used_laser_data;
 	}
-
+	std::cout<<"tf2_laser"<<std::endl;
 }
 
 void callback(const sclose &cl){
@@ -452,8 +464,8 @@ void update_amcl_entropy(const SAMCL_RES &res){
 			U8 data[] = {1};
 			U32 len = 1;
 
-			shared_pool::Shared_Pipe_Push( PROHIBIT_MAP ,"layer1",data,len);
-			std::cout<<"update_amcl_entropy set pause!"<<std::endl;
+//			shared_pool::Shared_Pipe_Push( PROHIBIT_MAP ,"layer1",data,len);
+//			std::cout<<"update_amcl_entropy set pause!"<<std::endl;
 //			Obstacle_Status status_comb = Obstacle_Status::OBSTACLE_STOP;
 //			set_pause_continue(status_comb);
 		}
@@ -508,9 +520,10 @@ void init_shared_pool(char *argv[]){
 }
 
 bool check_status(Obstacle_Status st,Obstacle_Status s1,Obstacle_Status s2,Obstacle_Status s3){
-	if((st==s1)||(st==s2)||(st==s2)){
+	if((st==s1)||(st==s2)||(st==s3)){
 		return true;
 	}
+	//std::cout<<"st: "<<st<<" s1: "<<s1<<" s2:"<<s2<<" s3: "<<s3<<std::endl;
 	return false;
 
 }
@@ -546,7 +559,7 @@ void set_pause_continue( Obstacle_Status &bflag){
 
 	data[0] = bflag;
 
-	//std::cout<<"status: "<<(int)data[0]<<std::endl;
+	std::cout<<"laser_safe set_status: "<<(int)data[0]<<std::endl;
 	shared_pool::Shared_Pipe_Push( PROHIBIT_MAP ,"layer1",data,len);
 	if(bflag == Obstacle_Status::OBSTACLE_STOP){
 		SLEEP(500);
@@ -587,89 +600,7 @@ int main(int argc, char *argv[])
 
 	bool init_lasershape = false;
 	int cnt = 0;
-#if 0
-	while(brun){
 
-		if(init_lasershape== false){
-			{
-				boost::mutex::scoped_lock lock(mu_laser_amcl);
-				if(b_first_run_amcl == false){
-					amcl_laser_first(get_amcl_laser_data, amcl_, amcl_para);
-					cnt++;
-				}
-			}
-
-			{
-				boost::mutex::scoped_lock lock(mu_laser_tf1);
-				if(b_first_run_tf1 == false){
-					tf1_laser_first(get_tf1_laser_data, tf1_, tf1_para);
-					cnt++;
-				}
-			}
-			{
-				boost::mutex::scoped_lock lock(mu_laser_tf2);
-				if(b_first_run_tf2==false){
-					tf2_laser_first(get_tf2_laser_data, tf2_, tf2_para);
-					cnt++;
-				}
-			}
-			if(cnt>=used_laser_){
-				init_lasershape = true;
-				std::cout<<"************************laser count: "<<cnt<<std::endl;
-			}
-			SLEEP(50);
-		}else{
-				F32 vx,vw;
-				{
-					boost::mutex::scoped_lock lock(mu_setspeed);
-					vx = get_speed.vx_;
-					vw = get_speed.vw_;
-				}
-
-				if(use_photosensor){
-					boost::mutex::scoped_lock lock(mu_dio);
-					obstacle_finder.SetDI(Sdi);
-				}
-				if ((use_laser_amcl)&&(b_first_run_amcl == false))
-				{
-					boost::mutex::scoped_lock lock(mu_laser_amcl);
-					obstacle_finder.check_Obstacle(vx,vw,amcl_,status_amcl);
-					//std::cout<<">>>>>Amcl status<<<: "<<(int)status_amcl<<std::endl;
-				}
-				if ((use_laser_tf1)&&(b_first_run_tf1==false))
-				{
-					boost::mutex::scoped_lock lock(mu_laser_tf1);
-					obstacle_finder.check_Obstacle(vx,vw,tf1_,status_tf1);
-					//std::cout<<">>>>>Tf1 status<<<<<<<<: "<<(int)status_tf1<<std::endl;
-
-				}
-				if ((use_laser_tf2)&&(b_first_run_tf2==false))
-				{
-					boost::mutex::scoped_lock lock(mu_laser_tf2);
-					obstacle_finder.check_Obstacle(vx,vw,tf2_,status_tf2);
-					//std::cout<<"Tf2 status: "<<(int)status_tf2<<std::endl;
-				}
-
-				if(check_status(Obstacle_Status::OBSTACLE_STOP,status_amcl,status_tf1,status_tf2)){
-					status_comb = Obstacle_Status::OBSTACLE_STOP;
-				}else if(check_status(Obstacle_Status::OBSTACLE_REDUCE2,status_amcl,status_tf1,status_tf2)){
-					status_comb = Obstacle_Status::OBSTACLE_REDUCE2;
-				}else if(check_status(Obstacle_Status::OBSTACLE_REDUCE1,status_amcl,status_tf1,status_tf2)){
-					status_comb = Obstacle_Status::OBSTACLE_REDUCE1;
-				}else{
-					status_comb = Obstacle_Status::NO_OBSTACLE;
-				}
-
-				if(argc > 1){
-					set_pause_continue(status_comb);
-				}
-
-		}
-
-		dt.ms_loop(50);   //20ms loop , 50hz
-
-	}
-#else
 	while(brun){
 		if(init_lasershape== false){
 			{
@@ -712,10 +643,11 @@ int main(int argc, char *argv[])
 //
 //			}
 		}else{
-				F32 vx,vw;
+				F32 vx,vy,vw;
 				{
 					boost::mutex::scoped_lock lock(mu_setspeed);
 					vx = get_speed.vx_;
+					vy = get_speed.vy_;
 					vw = get_speed.vw_;
 				}
 
@@ -726,20 +658,46 @@ int main(int argc, char *argv[])
 				if ((use_laser_amcl)&&(b_first_run_amcl == false))
 				{
 					boost::mutex::scoped_lock lock(mu_laser_amcl);
-					obstacle_finder.check_Obstacle(vx,vw,amcl_,status_amcl);
+					obstacle_finder.check_Obstacle(vx,vy,vw,amcl_,status_amcl);
 					//std::cout<<">>>>>Amcl status<<<: "<<(int)status_amcl<<std::endl;
+#if 0
+					//for yuguan only
+					NS_Laser_Safe::Obstacle_Status  special_status;
+					int tatal_scan = 0;
+					int set = 50;
+					Config::getConfig("laser_safe_stop_scan",set);
+					Obstacle_Detector::s_check_Obstacle(laser_stop_,special_status,set,tatal_scan);
+					//std::cout<<"stop_scan :"<<set<<std::endl;
+					if(special_status == NS_Laser_Safe::Obstacle_Status::OBSTACLE_STOP){
+						if(laser_safe_scan_stop == false){
+							U8 data[] = {1};
+							U32 len = 1;
+							shared_pool::Shared_Pipe_Push( PROHIBIT_MAP ,"layer1",data,len);
+							std::cout<<"special stop  set pause!tatal_scan:  "<<tatal_scan<<std::endl;
+							laser_safe_scan_stop  = true;
+						}
+
+					}else if((laser_safe_scan_stop  == true)&&(tatal_scan< set-20)){
+						U8 data[] = {0};
+						U32 len = 1;
+						shared_pool::Shared_Pipe_Push( PROHIBIT_MAP ,"layer1",data,len);
+						laser_safe_scan_stop = false;
+						std::cout<<"special stop  set continue! tatal_scan:"<<tatal_scan<<std::endl;
+					}
+					/////end///////
+#endif
 				}
 				if ((use_laser_tf1)&&(b_first_run_tf1==false))
 				{
 					boost::mutex::scoped_lock lock(mu_laser_tf1);
-					obstacle_finder.check_Obstacle(vx,vw,tf1_,status_tf1);
+					obstacle_finder.check_Obstacle(vx,vy,vw,tf1_,status_tf1);
 					//std::cout<<">>>>>Tf1 status<<<<<<<<: "<<(int)status_tf1<<std::endl;
 
 				}
 				if ((use_laser_tf2)&&(b_first_run_tf2==false))
 				{
 					boost::mutex::scoped_lock lock(mu_laser_tf2);
-					obstacle_finder.check_Obstacle(vx,vw,tf2_,status_tf2);
+					obstacle_finder.check_Obstacle(vx,vy,vw,tf2_,status_tf2);
 					//std::cout<<"Tf2 status: "<<(int)status_tf2<<std::endl;
 				}
 
@@ -751,9 +709,11 @@ int main(int argc, char *argv[])
 					status_comb = Obstacle_Status::OBSTACLE_REDUCE1;
 				}else{
 					status_comb = Obstacle_Status::NO_OBSTACLE;
+					//std::cout<<"status_comb no obstacle status_tf2 :"<<status_tf2<<std::endl;
 				}
 
 				if(argc > 1){
+					//std::cout<<"set pause: "<<status_comb<<std::endl;
 					set_pause_continue(status_comb);
 				}
 
@@ -762,270 +722,6 @@ int main(int argc, char *argv[])
 		dt.ms_loop(50);   //20ms loop , 50hz
 	}
 
-#endif
 	return 0;
-}
-
-
-void amcl_laser_first(const SLaser &used_laser_data, Laser_safe &laser_safe, SLaser_para &laser_para)
-{
-	laser_safe.laser_range_straight_redu1_ = used_laser_data;
-	laser_safe.laser_range_straight_redu2_ = used_laser_data;
-	laser_safe.laser_range_straight_buff_ = used_laser_data;
-	laser_safe.laser_range_straight_stop_ = used_laser_data;
-	laser_safe.laser_range_left_redu1_ = used_laser_data;
-	laser_safe.laser_range_left_redu2_ = used_laser_data;
-	laser_safe.laser_range_left_buff_ = used_laser_data;
-	laser_safe.laser_range_left_stop_ = used_laser_data;
-	laser_safe.laser_range_right_redu1_ = used_laser_data;
-	laser_safe.laser_range_right_redu2_ = used_laser_data;
-	laser_safe.laser_range_right_buff_ = used_laser_data;
-	laser_safe.laser_range_right_stop_ = used_laser_data;
-
-	laser_safe.laser_range_straight_redu1_r_ = used_laser_data;
-	laser_safe.laser_range_straight_redu2_r_ = used_laser_data;
-	laser_safe.laser_range_straight_buff_r_ = used_laser_data;
-	laser_safe.laser_range_straight_stop_r_ = used_laser_data;
-	laser_safe.laser_range_left_redu1_r_ = used_laser_data;
-	laser_safe.laser_range_left_redu2_r_ = used_laser_data;
-	laser_safe.laser_range_left_buff_r_ = used_laser_data;
-	laser_safe.laser_range_left_stop_r_ = used_laser_data;
-	laser_safe.laser_range_right_redu1_r_ = used_laser_data;
-	laser_safe.laser_range_right_redu2_r_ = used_laser_data;
-	laser_safe.laser_range_right_buff_r_ = used_laser_data;
-	laser_safe.laser_range_right_stop_r_ = used_laser_data;
-
-	std::cout<<"Laser Shape polygon with laser dx:"<<laser_para.laser_dx_<<" dy:"<<laser_para.laser_dy_<<std::endl;
-
-	amcl_polygon_ex_.init_shape(str_safe_shape_straight_cut1);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_straight_redu1_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_straight_cut2);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_straight_redu2_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_straight_buff);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_straight_buff_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_straight_stop);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_straight_stop_,laser_para.laser_dx_,laser_para.laser_dy_);
-
-	amcl_polygon_ex_.init_shape(str_safe_shape_left_cut1);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_left_redu1_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_left_cut2);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_left_redu2_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_left_buff);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_left_buff_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_left_stop);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_left_stop_,laser_para.laser_dx_,laser_para.laser_dy_);
-
-	amcl_polygon_ex_.init_shape(str_safe_shape_right_cut1);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_right_redu1_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_right_cut2);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_right_redu2_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_right_buff);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_right_buff_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_right_stop);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_right_stop_,laser_para.laser_dx_,laser_para.laser_dy_);
-
-
-	amcl_polygon_ex_.init_shape(str_safe_shape_straight_cut1_r);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_straight_redu1_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_straight_cut2_r);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_straight_redu2_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_straight_buff_r);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_straight_buff_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_straight_stop_r);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_straight_stop_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-
-	amcl_polygon_ex_.init_shape(str_safe_shape_left_cut1_r);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_left_redu1_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_left_cut2_r);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_left_redu2_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_left_buff_r);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_left_buff_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_left_stop_r);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_left_stop_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-
-	amcl_polygon_ex_.init_shape(str_safe_shape_right_cut1_r);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_right_redu1_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_right_cut2_r);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_right_redu2_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_right_buff_r);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_right_buff_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	amcl_polygon_ex_.init_shape(str_safe_shape_right_stop_r);
-	amcl_polygon_ex_.get_range(laser_safe.laser_range_right_stop_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-
-
-}
-
-void tf1_laser_first(const SLaser &used_laser_data, Laser_safe &laser_safe, SLaser_para &laser_para)
-{
-	laser_safe.laser_range_straight_redu1_ = used_laser_data;
-	laser_safe.laser_range_straight_redu2_ = used_laser_data;
-	laser_safe.laser_range_straight_buff_ = used_laser_data;
-	laser_safe.laser_range_straight_stop_ = used_laser_data;
-	laser_safe.laser_range_left_redu1_ = used_laser_data;
-	laser_safe.laser_range_left_redu2_ = used_laser_data;
-	laser_safe.laser_range_left_buff_ = used_laser_data;
-	laser_safe.laser_range_left_stop_ = used_laser_data;
-	laser_safe.laser_range_right_redu1_ = used_laser_data;
-	laser_safe.laser_range_right_redu2_ = used_laser_data;
-	laser_safe.laser_range_right_buff_ = used_laser_data;
-	laser_safe.laser_range_right_stop_ = used_laser_data;
-
-	laser_safe.laser_range_straight_redu1_r_ = used_laser_data;
-	laser_safe.laser_range_straight_redu2_r_ = used_laser_data;
-	laser_safe.laser_range_straight_buff_r_ = used_laser_data;
-	laser_safe.laser_range_straight_stop_r_ = used_laser_data;
-	laser_safe.laser_range_left_redu1_r_ = used_laser_data;
-	laser_safe.laser_range_left_redu2_r_ = used_laser_data;
-	laser_safe.laser_range_left_buff_r_ = used_laser_data;
-	laser_safe.laser_range_left_stop_r_ = used_laser_data;
-	laser_safe.laser_range_right_redu1_r_ = used_laser_data;
-	laser_safe.laser_range_right_redu2_r_ = used_laser_data;
-	laser_safe.laser_range_right_buff_r_ = used_laser_data;
-	laser_safe.laser_range_right_stop_r_ = used_laser_data;
-
-	std::cout<<"Laser Shape polygon with laser dx:"<<laser_para.laser_dx_<<" dy:"<<laser_para.laser_dy_<<std::endl;
-
-	tf1_polygon_ex_.init_shape(str_safe_shape_straight_cut1);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_straight_redu1_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_straight_cut2);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_straight_redu2_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_straight_buff);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_straight_buff_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_straight_stop);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_straight_stop_,laser_para.laser_dx_,laser_para.laser_dy_);
-
-	tf1_polygon_ex_.init_shape(str_safe_shape_left_cut1);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_left_redu1_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_left_cut2);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_left_redu2_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_left_buff);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_left_buff_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_left_stop);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_left_stop_,laser_para.laser_dx_,laser_para.laser_dy_);
-
-	tf1_polygon_ex_.init_shape(str_safe_shape_right_cut1);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_right_redu1_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_right_cut2);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_right_redu2_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_right_buff);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_right_buff_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_right_stop);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_right_stop_,laser_para.laser_dx_,laser_para.laser_dy_);
-
-
-	tf1_polygon_ex_.init_shape(str_safe_shape_straight_cut1_r);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_straight_redu1_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_straight_cut2_r);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_straight_redu2_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_straight_buff_r);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_straight_buff_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_straight_stop_r);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_straight_stop_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-
-	tf1_polygon_ex_.init_shape(str_safe_shape_left_cut1_r);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_left_redu1_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_left_cut2_r);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_left_redu2_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_left_buff_r);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_left_buff_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_left_stop_r);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_left_stop_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-
-	tf1_polygon_ex_.init_shape(str_safe_shape_right_cut1_r);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_right_redu1_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_right_cut2_r);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_right_redu2_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_right_buff_r);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_right_buff_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf1_polygon_ex_.init_shape(str_safe_shape_right_stop_r);
-	tf1_polygon_ex_.get_range(laser_safe.laser_range_right_stop_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-
-
-}
-
-void tf2_laser_first(const SLaser &used_laser_data, Laser_safe &laser_safe, SLaser_para &laser_para)
-{
-	laser_safe.laser_range_straight_redu1_ = used_laser_data;
-	laser_safe.laser_range_straight_redu2_ = used_laser_data;
-	laser_safe.laser_range_straight_buff_ = used_laser_data;
-	laser_safe.laser_range_straight_stop_ = used_laser_data;
-	laser_safe.laser_range_left_redu1_ = used_laser_data;
-	laser_safe.laser_range_left_redu2_ = used_laser_data;
-	laser_safe.laser_range_left_buff_ = used_laser_data;
-	laser_safe.laser_range_left_stop_ = used_laser_data;
-	laser_safe.laser_range_right_redu1_ = used_laser_data;
-	laser_safe.laser_range_right_redu2_ = used_laser_data;
-	laser_safe.laser_range_right_buff_ = used_laser_data;
-	laser_safe.laser_range_right_stop_ = used_laser_data;
-
-	laser_safe.laser_range_straight_redu1_r_ = used_laser_data;
-	laser_safe.laser_range_straight_redu2_r_ = used_laser_data;
-	laser_safe.laser_range_straight_buff_r_ = used_laser_data;
-	laser_safe.laser_range_straight_stop_r_ = used_laser_data;
-	laser_safe.laser_range_left_redu1_r_ = used_laser_data;
-	laser_safe.laser_range_left_redu2_r_ = used_laser_data;
-	laser_safe.laser_range_left_buff_r_ = used_laser_data;
-	laser_safe.laser_range_left_stop_r_ = used_laser_data;
-	laser_safe.laser_range_right_redu1_r_ = used_laser_data;
-	laser_safe.laser_range_right_redu2_r_ = used_laser_data;
-	laser_safe.laser_range_right_buff_r_ = used_laser_data;
-	laser_safe.laser_range_right_stop_r_ = used_laser_data;
-
-	std::cout<<"Laser Shape polygon with laser dx:"<<laser_para.laser_dx_<<" dy:"<<laser_para.laser_dy_<<std::endl;
-
-	tf2_polygon_ex_.init_shape(str_safe_shape_straight_cut1);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_straight_redu1_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_straight_cut2);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_straight_redu2_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_straight_buff);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_straight_buff_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_straight_stop);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_straight_stop_,laser_para.laser_dx_,laser_para.laser_dy_);
-
-	tf2_polygon_ex_.init_shape(str_safe_shape_left_cut1);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_left_redu1_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_left_cut2);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_left_redu2_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_left_buff);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_left_buff_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_left_stop);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_left_stop_,laser_para.laser_dx_,laser_para.laser_dy_);
-
-	tf2_polygon_ex_.init_shape(str_safe_shape_right_cut1);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_right_redu1_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_right_cut2);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_right_redu2_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_right_buff);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_right_buff_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_right_stop);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_right_stop_,laser_para.laser_dx_,laser_para.laser_dy_);
-
-
-	tf2_polygon_ex_.init_shape(str_safe_shape_straight_cut1_r);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_straight_redu1_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_straight_cut2_r);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_straight_redu2_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_straight_buff_r);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_straight_buff_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_straight_stop_r);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_straight_stop_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-
-	tf2_polygon_ex_.init_shape(str_safe_shape_left_cut1_r);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_left_redu1_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_left_cut2_r);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_left_redu2_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_left_buff_r);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_left_buff_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_left_stop_r);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_left_stop_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-
-	tf2_polygon_ex_.init_shape(str_safe_shape_right_cut1_r);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_right_redu1_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_right_cut2_r);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_right_redu2_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_right_buff_r);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_right_buff_r_,laser_para.laser_dx_,laser_para.laser_dy_);
-	tf2_polygon_ex_.init_shape(str_safe_shape_right_stop_r);
-	tf2_polygon_ex_.get_range(laser_safe.laser_range_right_stop_r_,laser_para.laser_dx_,laser_para.laser_dy_);
 }
 

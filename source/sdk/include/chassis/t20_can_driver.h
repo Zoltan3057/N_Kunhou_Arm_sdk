@@ -120,6 +120,7 @@ private:
 	bool hasTask;
 	bool isWorking;
 	int  ct_;
+	int forkpos_offset_;
 
 	cTimerDiff test_dt_;
 

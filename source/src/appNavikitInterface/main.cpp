@@ -10,17 +10,17 @@
 HANDLE   handle = NULL;
 cTransferDevice* pTrans = 0;
 
-#define MAX_BUF 4096
+#define MAX_BUF 409600
 
 std::string str_total = "";
 cConnPara conn_para;
 //ByteList list_total;
-//unsigned char uch_total[MAX_BUF];
+unsigned char uch_total[MAX_BUF];
 //int len_total = 0;
 
 void clear_buf(){
 //	list_total.Clear();
-//	memset(uch_total,0,MAX_BUF);
+	memset(uch_total,0,MAX_BUF);
 //	len_total = 0;
 	str_total = "";
 }
@@ -77,9 +77,11 @@ bool network_port(std::string ip){
 
 }
 
-bool init_trans(){
-	std::ifstream iff("appNavikitInterface.ini");
-
+bool init_trans(std::string str_init_name){
+	//std::ifstream iff("appNavikitInterface.ini");
+	str_init_name += ".ini";
+	std::cout<<"init appNavikitinterface ini:"<<str_init_name<<std::endl;
+	std::ifstream iff(str_init_name);
 	std::string str;
 	//std::string  strIP = "192.168.1.194";
 	std::string  strIP = "COM1";
@@ -157,8 +159,8 @@ bool getTCPData(std::string &res){
 
 	clear_buf();
 
-	unsigned char* uch_data = new unsigned char[1024];
-	memset(uch_data,0,1024);
+//	unsigned char* uch_data = new unsigned char[1024];
+//	memset(uch_data,0,1024);
 
 	int len_data = 0;
 
@@ -170,11 +172,15 @@ bool getTCPData(std::string &res){
 
 		len_data = 0;
 
-		pTrans->ReadData(uch_data,len_data,100,20);
-
-		std::string tmp = (char*)uch_data;
+		pTrans->ReadData(uch_total,len_data,100,20);
+		if(len_data != 0){
+			std::cout<<"rec data:"<<cComm::ByteToHexString(uch_total,len_data)<<std::endl;
+		}
+		std::string tmp = (char*)uch_total;
 
 		str_total += tmp;
+
+		memset(uch_total,0,MAX_BUF);
 
 		str_send = check_json_over();
 
@@ -226,7 +232,9 @@ int main(int argc, char *argv[])
 {
 	char    *host   = "127.0.0.1";
 
-	init_trans();
+	std::string init_name = argv[0];
+
+	init_trans(init_name);
 	//
 	NavikitInterfaceCreate( host, 
 		                   &handle);
@@ -268,7 +276,7 @@ int main(int argc, char *argv[])
 			SLEEP(3000);
 			std::cout<<"close tranfer device over!"<<std::endl;
 
-			init_trans();
+			init_trans(init_name);
 
 			b_run = true;
 			i_err_count = 0;

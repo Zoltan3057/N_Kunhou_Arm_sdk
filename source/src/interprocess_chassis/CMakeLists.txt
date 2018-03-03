@@ -24,6 +24,7 @@ set(INTERPROCESS_CHASSIS_LIB
 	libplc
 	libcom
 	librobot
+	liblinuxdriver
 	libshared_pool    
 	liblog4cpp  
 	${Boost_LIBRARIES}
@@ -42,6 +43,7 @@ set(INTERPROCESS_CHASSIS_LIB
 	libplc
 	libcom
 	librobot
+	liblinuxdriver
 	libshared_pool    
 	liblog4cpp
 	controlcan
@@ -63,6 +65,7 @@ set(INTERPROCESS_CHASSIS_LIB
 	libplcd
 	libcomd
 	librobotd
+	liblinuxdriverd
 	libshared_poold    
 	liblog4cppd
 	${Boost_LIBRARIES}
@@ -82,6 +85,7 @@ set(INTERPROCESS_CHASSIS_LIB
 	libplcd
 	libcomd
 	librobotd
+	liblinuxdriverd
 	libshared_poold    
 	liblog4cppd
 	controlcan

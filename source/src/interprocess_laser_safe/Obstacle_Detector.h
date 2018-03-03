@@ -53,6 +53,16 @@ typedef struct _Laser_safe
 	SLaser laser_range_right_redu2_r_;
 	SLaser laser_range_right_buff_r_;
 	SLaser laser_range_right_stop_r_;
+
+	SLaser laser_range_left_straight_redu1_;
+	SLaser laser_range_left_straight_redu2_;
+	SLaser laser_range_left_straight_buff_;
+	SLaser laser_range_left_straight_stop_;
+
+	SLaser laser_range_right_straight_redu1_;
+	SLaser laser_range_right_straight_redu2_;
+	SLaser laser_range_right_straight_buff_;
+	SLaser laser_range_right_straight_stop_;
 	Direction  laser_location_;     //激光在车体上的位置
 
 } Laser_safe;
@@ -65,7 +75,9 @@ typedef enum{
 	BACK_STRAIGHT  = 3,
 	BACK_LEFT      = 4,
 	BACK_RIGHT     = 5,
-	UNKNOWN        = 6    //当planner_tray处于IDEL状态时，框体方向是未知的，不作障碍物判断
+	LEFT_STRAIGHT  = 6,
+	RIGHT_STRAIGHT = 7,
+	UNKNOWN        = 8    //当planner_tray处于IDEL状态时，框体方向是未知的，不作障碍物判断
 }SHAPE_DIR;
 
 //避障框体类型
@@ -122,6 +134,17 @@ typedef struct _Safe_Frames_{
 	 std::vector<Sxy> back_right_buff_;
 	 std::vector<Sxy> back_right_stop_;
 
+	 std::vector<Sxy> left_straight_redu1_;
+	 std::vector<Sxy> left_straight_redu2_;
+	 std::vector<Sxy> left_straight_buff_;
+	 std::vector<Sxy> left_straight_stop_;
+
+	 std::vector<Sxy> right_straight_redu1_;
+	 std::vector<Sxy> right_straight_redu2_;
+	 std::vector<Sxy> right_straight_buff_;
+	 std::vector<Sxy> right_straight_stop_;
+
+
 }Safe_Frames;
 
 }
@@ -133,9 +156,10 @@ public:
 	Obstacle_Detector();
 	~Obstacle_Detector();
 	void setPara(F32 obstacle_min);
+	static void s_check_Obstacle(const NS_Laser_Safe::Laser_safe&laser_safe_info,
+			                    NS_Laser_Safe::Obstacle_Status &cs,int set,int &total);
 
-
-	bool check_Obstacle(const F32 &vx, const F32 &vw,
+	bool check_Obstacle(const F32 &vx, const F32 &vy,const F32 &vw,
 						const NS_Laser_Safe::Laser_safe&laser_safe_shape,
 						NS_Laser_Safe::Obstacle_Status &cs);
 
@@ -161,6 +185,8 @@ private:
 	void check_BackRight(const NS_Laser_Safe::Laser_safe&laser_safe_info,
 							NS_Laser_Safe::Obstacle_Status &cs);
 
+	void check_LeftStraight(const NS_Laser_Safe::Laser_safe&laser_safe_info,NS_Laser_Safe::Obstacle_Status &cs);
+	void check_RightStraight(const NS_Laser_Safe::Laser_safe&laser_safe_info,NS_Laser_Safe::Obstacle_Status &cs);
 	/*   Laser Range Finder -> check_data()
 	 *  only laser_data  < laser_range ,return true;*/
 	bool check_data( SLaser &laser_data, SLaser &laser_range,const F32 angle = 0.0);
@@ -169,21 +195,21 @@ private:
 	 * only di is '1',return true */
 	bool check_data(const SDI di);
 
-	void preProcessSpeed(const F32 &vx,const F32 &vw,NS_Laser_Safe::SHAPE_DIR &dir);
+	void preProcessSpeed(const F32 &vx,const F32 &vy,const F32 &vw,NS_Laser_Safe::SHAPE_DIR &dir);
 
 	//function: get laser_range
 	void lasersafe_init_shape( const std::string &str_shape );
 	void lasersafe_init_shape(const std::vector<Sxy> &shape);
 	void lasersafe_get_range(SLaser& min_range,F32 dx,F32 dy);
-	bool lasersafe_getCrossLine2(Line &ln,VecPosition ray);
-	bool lasersafe_find_ray_in_seg(std::vector<Sxy>::iterator &it_begin,std::vector<Sxy>::iterator &it_end,const VecPosition& ray);
+	bool lasersafe_getCrossLine2(Line &ln,VecPosition ray,VecPosition& shape_vertex1,VecPosition& shape_vertex2,VecPosition&close_shape_vertex,bool& check);
+	bool lasersafe_find_ray_in_seg(std::vector<Sxy>::iterator &it_begin,std::vector<Sxy>::iterator &it_end,const VecPosition& ray,VecPosition& close_to,bool& check);
 
-
-	void shapexy_to_vector(const Shape_xy shapexy/*In:Robotshape*/,std::vector<Sxy> &shape/*Out:Sxy vector*/,F32 x_diff,F32 y_diff,bool front/*true:front, false: back*/);
+	void shapexy_to_vector(const Shape_xy shapexy/*In:Robotshape*/,std::vector<Sxy> &shape/*Out:Sxy vector*/,F32 x_diff,F32 y_diff,bool front/*true:left, false: right*/);
 	void shapexy_to_vector(const Shape_xy shapexy/*In:Robotshape*/,std::vector<Sxy> &shape/*Out:Sxy vector*/,F32 x_diff,F32 y_diff,F32 angle/*In:rotate_angle*/,bool front/*true:front, false: back*/);
 	void outputshape(SLaser shape,F32 laser_dx,F32 laser_dy);
 
-
+	//for yg only
+	static bool check_data(SLaser &laser_data, SLaser &laser_range,int set,int &total);
 private:
 	typedef boost::function< void(const NS_Laser_Safe::Laser_safe&laser_safe_info,
 								  	  NS_Laser_Safe::Obstacle_Status &cs) > CALL;

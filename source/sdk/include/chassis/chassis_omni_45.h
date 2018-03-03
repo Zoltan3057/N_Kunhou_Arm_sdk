@@ -80,6 +80,8 @@ private:
 	F32 BM21_;
 	F32 BM22_;
 	F32 BM23_;
+
+
 };
 
 #endif   //_CHASSIS_OMNI_45_DONGLEI_2017_12_13_
